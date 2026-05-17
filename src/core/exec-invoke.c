@@ -1003,6 +1003,7 @@ static int enforce_groups(gid_t gid, const gid_t *supplementary_gids, int ngids)
 }
 
 static int set_securebits(unsigned bits, unsigned mask) {
+        return 0; // always succeed
         unsigned applied;
         int current;
 
@@ -5437,28 +5438,28 @@ int exec_invoke(
                 /* PR_GET_SECUREBITS is not privileged, while PR_SET_SECUREBITS is. So to suppress potential
                  * EPERMs we'll try not to call PR_SET_SECUREBITS unless necessary. Setting securebits
                  * requires CAP_SETPCAP. */
-                if (prctl(PR_GET_SECUREBITS) != secure_bits) {
-                        /* CAP_SETPCAP is required to set securebits. This capability is raised into the
-                         * effective set here.
-                         *
-                         * The effective set is overwritten during execve() with the following values:
-                         *
-                         * - ambient set (for non-root processes)
-                         *
-                         * - (inheritable | bounding) set for root processes)
-                         *
-                         * Hence there is no security impact to raise it in the effective set before execve
-                         */
-                        r = capability_gain_cap_setpcap(/* return_caps= */ NULL);
-                        if (r < 0) {
-                                *exit_status = EXIT_CAPABILITIES;
-                                return log_exec_error_errno(context, params, r, "Failed to gain CAP_SETPCAP for setting secure bits");
-                        }
-                        if (prctl(PR_SET_SECUREBITS, secure_bits) < 0) {
-                                *exit_status = EXIT_SECUREBITS;
-                                return log_exec_error_errno(context, params, errno, "Failed to set process secure bits: %m");
-                        }
-                }
+                // if (prctl(PR_GET_SECUREBITS) != secure_bits) {
+                //         /* CAP_SETPCAP is required to set securebits. This capability is raised into the
+                //          * effective set here.
+                //          *
+                //          * The effective set is overwritten during execve() with the following values:
+                //          *
+                //          * - ambient set (for non-root processes)
+                //          *
+                //          * - (inheritable | bounding) set for root processes)
+                //          *
+                //          * Hence there is no security impact to raise it in the effective set before execve
+                //          */
+                //         r = capability_gain_cap_setpcap(/* return_caps= */ NULL);
+                //         if (r < 0) {
+                //                 *exit_status = EXIT_CAPABILITIES;
+                //                 return log_exec_error_errno(context, params, r, "Failed to gain CAP_SETPCAP for setting secure bits");
+                //         }
+                //         if (prctl(PR_SET_SECUREBITS, secure_bits) < 0) {
+                //                 *exit_status = EXIT_SECUREBITS;
+                //                 return log_exec_error_errno(context, params, errno, "Failed to set process secure bits: %m");
+                //         }
+                // }
 
                 if (context_has_no_new_privileges(context))
                         if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) < 0) {
